@@ -1,3 +1,9 @@
+## 0.3.0 (2026-09-13)
+
+### Feat
+
+- capture module — bundle 4 object kinds from a connected TM1 instance (#7)
+
 ## 0.2.0 (2026-09-13)
 
 ### Feat
