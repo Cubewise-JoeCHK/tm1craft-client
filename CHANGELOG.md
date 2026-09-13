@@ -1,3 +1,9 @@
+## 0.4.1 (2026-09-13)
+
+### Fix
+
+- hand upload_bundle the entities mapping, not capture_bundle's wrapper
+
 ## 0.4.0 (2026-09-13)
 
 ### Feat
