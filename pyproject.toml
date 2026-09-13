@@ -14,6 +14,9 @@ dependencies = [
     "TM1py>=2.3",
 ]
 
+[project.scripts]
+tm1craft-client = "tm1craft_client.cli:main"
+
 [dependency-groups]
 dev = [
     "pre-commit>=4.0",
