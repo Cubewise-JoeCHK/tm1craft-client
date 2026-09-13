@@ -145,7 +145,7 @@ def _run_dump(args: argparse.Namespace) -> int:
             tm1.logout()
         result = upload_bundle(
             service_url,
-            bundle,
+            bundle["entities"],
             instance=instance.name,
             arc_origin=args.arc_origin,
             license_key=license_key,

@@ -10,7 +10,7 @@ import importlib.metadata
 import pytest
 
 from tm1craft_client import cli
-from tm1craft_client.capture import CaptureError
+from tm1craft_client.capture import ENTITY_KINDS, CaptureError
 from tm1craft_client.jobclient import JobResult, ServiceError
 
 REGISTRY_INI = """\
@@ -163,7 +163,82 @@ def test_dump_passes_the_captured_bundle_through(registry_path, tm1_recorder, mo
     cli.main(["dump", "prod", "--credentials", registry_path])
     assert capture_calls[0]["instance"] == "prod"
     assert capture_calls[0]["tm1"] is tm1_recorder[0]
-    assert upload_calls[0]["bundle"] is BUNDLE
+    assert upload_calls[0]["bundle"] is BUNDLE["entities"]
+
+
+def test_dump_hands_upload_bundle_the_kind_mapping_not_the_outer_bundle(registry_path, tm1_recorder, monkeypatch):
+    """The #5 live-acceptance regression: ``upload_bundle`` validates kind keys, so the
+    CLI must unwrap ``capture_bundle``'s ``{"instance", "entities"}`` wrapper — passing
+    the outer dict dies on 'bundle carries kinds outside the wire contract'."""
+    install_capture(monkeypatch)
+    upload_calls = install_upload(monkeypatch)
+    exit_code = cli.main(["dump", "prod", "--credentials", registry_path])
+    assert exit_code == 0
+    assert set(upload_calls[0]["bundle"]) <= set(ENTITY_KINDS)
+    assert "instance" not in upload_calls[0]["bundle"]
+
+
+class _EmptyModelResponse:
+    """Duck-typed ``requests.Response``: only ``.content`` is consumed."""
+
+    def __init__(self, content: bytes) -> None:
+        self.content = content
+
+
+class _EmptySlice:
+    """Duck-typed ``tm1.processes`` / ``tm1.chores`` slice: no entities."""
+
+    def get_all(self):
+        return []
+
+
+class _EmptyModelTM1:
+    """Duck-typed ``TM1Service`` serving an empty model to the real ``capture_bundle``.
+
+    The connection answers every collection query with ``{"value": []}`` and
+    every ``/<Collection>/$count`` with ``0``, so the capture's count
+    cross-check passes with all four kinds empty.
+    """
+
+    def __init__(self, **kwargs) -> None:
+        self.kwargs = kwargs
+        self.logged_out = False
+        self.processes = _EmptySlice()
+        self.chores = _EmptySlice()
+
+    @property
+    def connection(self) -> "_EmptyModelConnection":
+        return _EmptyModelConnection()
+
+    def logout(self) -> None:
+        self.logged_out = True
+
+
+class _EmptyModelConnection:
+    def GET(self, url: str, headers=None, **kwargs) -> _EmptyModelResponse:  # noqa: N802 — TM1py's method name
+        if url.endswith("/$count"):
+            return _EmptyModelResponse(b"0")
+        return _EmptyModelResponse(b'{"value": []}')
+
+
+def test_dump_runs_the_real_capture_into_the_upload_contract(registry_path, monkeypatch, capsys):
+    """The #5 seam, end to end with the real ``capture_bundle``: the entities
+    mapping it returns (not the ``{"instance", "entities"}`` wrapper) is what
+    reaches ``upload_bundle`` — the live acceptance failed exactly here."""
+    created = []
+
+    def fake_tm1_service(**kwargs):
+        service = _EmptyModelTM1(**kwargs)
+        created.append(service)
+        return service
+
+    monkeypatch.setattr(cli, "TM1Service", fake_tm1_service)
+    upload_calls = install_upload(monkeypatch)
+    exit_code = cli.main(["dump", "prod", "--credentials", registry_path])
+    assert exit_code == 0
+    assert created[0].logged_out is True
+    assert upload_calls[0]["bundle"] == {"processes": [], "cubes": [], "dimensions": [], "chores": []}
+    assert "capture chores: 0 fetched" in capsys.readouterr().err
 
 
 def test_dump_logs_out_even_when_capture_fails(registry_path, tm1_recorder, monkeypatch):
