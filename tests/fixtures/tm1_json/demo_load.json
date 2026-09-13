@@ -1,0 +1,14 @@
+{
+  "Name": "}tm1craft.demo.load",
+  "PrologProcedure": "StringGlobalVariable('sProcessReturnCode');\r\nsLogFile = 'demo.log';\r\nIf (pDebug > 0);\r\n  LogOutput('INFO', 'starting demo load');\r\nEndIf;\r\n",
+  "MetadataProcedure": "AttrPutS('demo', '}tm1craft.demo.dim', 'total_europe');\r\n",
+  "DataProcedure": "ExecuteProcess('}tm1craft.demo.maint');\r\n",
+  "EpilogProcedure": "LogOutput('INFO', 'done: ' | sLogFile);\r\n",
+  "Parameters": [
+    {"Name": "pDebug", "Type": "Numeric", "Prompt": "Debug mode", "Value": 0}
+  ],
+  "Variables": [],
+  "DataSource": {"Type": "None"},
+  "HasSecurityAccess": true,
+  "UIData": ""
+}

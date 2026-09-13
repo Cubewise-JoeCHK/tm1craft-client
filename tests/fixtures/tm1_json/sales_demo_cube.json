@@ -1,0 +1,10 @@
+{
+  "Name": "SalesDemo",
+  "Rules": "['Sales'] = N: DB ('SalesCube', !Year) * 1.1;\r\nFEEDERS;\r\n['Sales'] => DB ('SalesCube', !Year);\r\n",
+  "Dimensions": ["Year", "Measure"],
+  "Attributes": {
+    "Description": "Sales planning demo cube",
+    "Business Area": "Commercial",
+    "Load Order": 2
+  }
+}

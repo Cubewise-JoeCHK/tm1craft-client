@@ -1,0 +1,22 @@
+{
+  "Name": "}tm1craft.demo.odbc.load",
+  "PrologProcedure": "vRows = 0;\r\n",
+  "MetadataProcedure": "",
+  "DataProcedure": "vRows = vRows + 1;\r\n",
+  "EpilogProcedure": "",
+  "Parameters": [],
+  "Variables": [{"Name": "vRows", "Type": "Numeric"}],
+  "DataSource": {
+    "Type": "ODBC",
+    "dataSourceNameForServer": "DRIVER={SQL Server};SERVER=sql01;DATABASE=Sales",
+    "dataSourceNameForClient": "sql01_client_dsn",
+    "userName": "etl_reader",
+    "password": "kd:6El@o[f7?jK; encrypted junk from the server dump",
+    "query": "SELECT Region, Amount FROM dbo.SalesFacts",
+    "useUniqueFacts": false,
+    "unicodeFacts": false,
+    "usesProtocol": ""
+  },
+  "HasSecurityAccess": false,
+  "UIData": ""
+}
