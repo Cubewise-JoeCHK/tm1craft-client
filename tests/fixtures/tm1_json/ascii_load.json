@@ -1,0 +1,26 @@
+{
+  "Name": "}tm1craft.demo.ascii.load",
+  "PrologProcedure": "",
+  "MetadataProcedure": "",
+  "DataProcedure": "vLines = vLines + 1;\r\n",
+  "EpilogProcedure": "",
+  "Parameters": [],
+  "Variables": [{"Name": "vLines", "Type": "Numeric"}],
+  "DataSource": {
+    "Type": "ASCII",
+    "dataSourceNameForServer": "sales_export.csv",
+    "dataSourceNameForClient": "",
+    "userName": "",
+    "password": "",
+    "query": "",
+    "view": "",
+    "subset": "",
+    "asciiHeaderRecords": 1,
+    "asciiDelimiterType": "Character",
+    "asciiDelimiterChar": ",",
+    "asciiQuoteCharacter": "\"",
+    "asciiThousandSeparator": ","
+  },
+  "HasSecurityAccess": false,
+  "UIData": ""
+}

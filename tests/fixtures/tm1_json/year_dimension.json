@@ -1,0 +1,22 @@
+{
+  "Name": "Year",
+  "Elements": [
+    {
+      "Name": "FY24",
+      "Type": "Numeric"
+    },
+    {
+      "Name": "FY25",
+      "Type": "Numeric"
+    }
+  ],
+  "ElementAttributes": [
+    {
+      "Name": "Financial Year",
+      "Type": "Alias"
+    }
+  ],
+  "Attributes": {
+    "Description": "Financial calendar years"
+  }
+}
