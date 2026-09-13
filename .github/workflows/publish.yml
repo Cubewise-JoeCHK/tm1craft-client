@@ -1,0 +1,56 @@
+# Publish to PyPI via OIDC Trusted Publishing — no tokens, no secrets.
+# PyPI validates the job's short-lived OIDC token against the pending
+# publisher registered on pypi.org (project tm1craft-client, owner
+# Cubewise-JoeCHK, repo tm1craft-client, workflow publish.yml, no
+# environment). See issue #10 for the one-time registration checklist.
+#
+# Two paths into the same job:
+#   1. release [released] — every release cut on main (commitizen) is
+#      published automatically.
+#   2. workflow_dispatch with a `tag` input — publish an already-cut
+#      release (e.g. 0.4.1) after the PyPI-side registration is done.
+#
+# NOTE: if a GitHub environment is ever added to this job (e.g. for
+# protection rules), the environment NAME must be added to the trusted
+# publisher on pypi.org, or every publish will fail the OIDC check.
+name: Publish to PyPI
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to publish (e.g. 0.4.1)"
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  publish:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # The only permission beyond read: lets the job mint the OIDC token
+      # PyPI validates. This is not a secret and grants nothing else.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      # No `password:` input — its absence switches the action to OIDC
+      # trusted publishing. The publish action also validates the package
+      # metadata before upload.
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
