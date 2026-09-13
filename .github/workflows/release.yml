@@ -1,0 +1,47 @@
+# Canonical release CI — commitizen-action, per
+# https://github.com/commitizen-tools/commitizen-action.
+# One step runs `cz bump`: derives the next version from conventional
+# commits, rewrites the version_files in .cz.toml, updates CHANGELOG.md,
+# commits, tags and pushes. The action exposes the new version as
+# $REVISION / steps.cz.outputs.version; a release is created from the
+# changelog increment.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Bump version, changelog, tag, release
+    # A commit pushed by GITHUB_TOKEN does not re-trigger the workflow;
+    # this guard is belt-and-braces (it also skips the action's own bump
+    # commit if it ever runs with a PAT).
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # commitizen needs full history + tags
+
+      - name: Create bump and changelog
+        id: cz
+        uses: commitizen-tools/commitizen-action@master  # or pin a release tag
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          changelog_increment_filename: body.md
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: body.md
+          tag_name: ${{ env.REVISION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

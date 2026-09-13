@@ -1,0 +1,13 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+dist/
+
+# uv.lock is committed on purpose (reproducible installs)
+
+# editors / os
+.DS_Store
+.idea/
+.vscode/

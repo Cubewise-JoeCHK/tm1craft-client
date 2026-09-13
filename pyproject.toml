@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tm1craft-client"
+version = "0.1.0"  # `cz bump` rewrites this line (see version_files in .cz.toml)
+description = "Headless TM1 capture client for tm1craft — download TM1 model objects with TM1py and hand them to a tm1craft service to build the model graph"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Cubewise-JoeCHK" }]
+requires-python = ">=3.11"
+dependencies = [
+    "TM1py>=2.3",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0",
+    "commitizen>=4.0",
+    "pytest>=8.0",
+    "ruff>=0.8",
+]

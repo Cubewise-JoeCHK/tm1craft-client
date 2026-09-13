@@ -1,0 +1,38 @@
+# Canonical pre-commit config — distilled from /proj (allo, cubewise_tool,
+# tm1craft, tm1-knowledge, tm1-treesitter).
+# Copy into a new repo, then: uv run pre-commit install
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0  # seen: v4.6.0, v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']  # tm1-treesitter uses 500
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: debug-statements
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: name-tests-test
+        args: ['--pytest-test-first']
+        exclude: ^tests/(conftest|fixtures|assets)/
+      - id: detect-private-key
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.12  # seen: v0.8.4, v0.14.13, v0.15.0, v0.15.12
+    hooks:
+      - id: ruff-check
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # Commitizen - enforce Conventional Commits format
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.16.3  # seen: v3.27.0, v4.13.9, v4.16.3
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]

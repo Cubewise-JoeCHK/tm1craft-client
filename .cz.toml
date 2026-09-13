@@ -1,0 +1,32 @@
+# Canonical commitizen config — distilled from /proj (tm1-treesitter,
+# tm1craft, tm1-knowledge, allo). Standalone file; prefer this over a
+# [tool.commitizen] block in pyproject.toml.
+#
+# version_provider = "scm": the version comes from the last git tag; the
+# version_files patterns just list which files `cz bump` rewrites. Pattern
+# "version" matches the literal `version = "x.y.z"` line (NOT
+# "pyproject.toml:project.version", which silently skips that line).
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "scm"
+version_files = [
+    "pyproject.toml:version",
+    # ".cz.toml:tool.commitizen.version",  # only if a version is kept here
+]
+tag_format = "$version"
+update_changelog_on_bump = true
+major_version_zero = true
+annotated_tag = true
+bump_message = "chore(release): $current_version → $new_version [skip ci]"
+
+[tool.commitizen.allowed_types]
+feat = "feat: A new feature (MINOR version bump)"
+fix = "fix: A bug fix (PATCH version bump)"
+perf = "perf: A performance improvement (PATCH version bump)"
+refactor = "refactor: A code change that neither fixes a bug nor adds a feature"
+test = "test: Adding missing tests or correcting existing tests"
+docs = "docs: Documentation only changes"
+chore = "chore: Changes to the build process or auxiliary tools and libraries"
+ci = "ci: Changes to CI configuration files and scripts"
+build = "build: Changes that affect the build system or external dependencies"
+style = "style: Changes that do not affect the meaning of the code (formatting, etc.)"
