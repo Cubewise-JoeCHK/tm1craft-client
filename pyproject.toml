@@ -13,6 +13,22 @@ requires-python = ">=3.11"
 dependencies = [
     "TM1py>=2.3",
 ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: Office/Business",
+]
+keywords = ["tm1", "tm1py", "olap", "business-intelligence", "planning", "model-capture"]
+
+[project.urls]
+Homepage = "https://github.com/Cubewise-JoeCHK/tm1craft-client"
+Repository = "https://github.com/Cubewise-JoeCHK/tm1craft-client"
+Changelog = "https://github.com/Cubewise-JoeCHK/tm1craft-client/blob/main/CHANGELOG.md"
 
 [project.scripts]
 tm1craft-client = "tm1craft_client.cli:main"
