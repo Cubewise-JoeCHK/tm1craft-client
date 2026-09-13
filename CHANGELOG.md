@@ -1,3 +1,9 @@
+## 0.4.0 (2026-09-13)
+
+### Feat
+
+- CLI + config — dump/list over the ADR-0003 INI registry, --service required, typed exit codes (#4) (#8)
+
 ## 0.3.0 (2026-09-13)
 
 ### Feat
