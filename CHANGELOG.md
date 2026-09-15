@@ -1,3 +1,9 @@
+## 0.5.0 (2026-09-15)
+
+### Feat
+
+- **build**: Windows exe drop-in — tm1craft-client.exe without Python (#12) (#13)
+
 ## 0.4.1 (2026-09-13)
 
 ### Fix
