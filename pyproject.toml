@@ -37,6 +37,9 @@ tm1craft-client = "tm1craft_client.cli:main"
 dev = [
     "pre-commit>=4.0",
     "commitizen>=4.0",
+    # The Windows drop-in build (.github/scripts/build-windows-exe.sh, #12):
+    # a build tool, never a runtime dependency.
+    "pyinstaller>=6",
     "pytest>=8.0",
     "ruff>=0.8",
 ]

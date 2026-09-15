@@ -26,6 +26,11 @@ jobs:
     # commit if it ever runs with a PAT).
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    outputs:
+      # The tag commitizen created (tag_format "$version" in .cz.toml —
+      # bare, no v prefix). The windows-exe job checks it out and uploads
+      # its zip to the release softprops already created.
+      tag: ${{ steps.cz.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,3 +50,32 @@ jobs:
           tag_name: ${{ env.REVISION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # The Windows drop-in (#12): build the onedir with the release script
+  # (its embedded smoke — --version, --help, list over a staged INI —
+  # runs inside the step) and attach the zip to the release above. The
+  # needs ordering guarantees the release exists before the upload, so
+  # no asset-race handling is needed.
+  windows-exe:
+    name: Windows exe build + smoke
+    needs: release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # the bump commit (tagged), not the commit that triggered this run
+          ref: ${{ needs.release.outputs.tag }}
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Build exe and smoke it (version, help, list)
+        shell: bash
+        run: bash .github/scripts/build-windows-exe.sh "${{ needs.release.outputs.tag }}"
+
+      - name: Attach exe zip to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ needs.release.outputs.tag }}" dist/tm1craft-client-*.zip --repo "$GITHUB_REPOSITORY"
