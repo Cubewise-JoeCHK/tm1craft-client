@@ -49,9 +49,18 @@ pip install git+https://github.com/Cubewise-JoeCHK/tm1craft-client.git
 uv tool install git+https://github.com/Cubewise-JoeCHK/tm1craft-client.git
 ```
 
-Releases are tagged (`v0.4.0`, …) — pin one with
-`git+https://github.com/Cubewise-JoeCHK/tm1craft-client.git@v0.4.0` if you
+Releases are tagged (`0.4.0`, …) — pin one with
+`git+https://github.com/Cubewise-JoeCHK/tm1craft-client.git@0.4.0` if you
 want reproducible installs.
+
+### Windows exe (no Python)
+
+Every release also ships a self-contained Windows x64 build: grab
+`tm1craft-client-<tag>-windows-x64.zip` from
+[releases](https://github.com/Cubewise-JoeCHK/tm1craft-client/releases/latest),
+unzip it anywhere, and run `tm1craft-client.exe` — no Python, no pip, no
+dependencies. The zip's README covers the credentials INI, exit codes,
+and the license-key variable.
 
 Describe each TM1 instance and the service in an INI credentials registry
 (ADR-0003 format) — placeholder hosts shown; use your own:
