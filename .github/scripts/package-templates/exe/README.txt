@@ -25,6 +25,19 @@ RUN
 
    tm1craft-client.exe list            prints the registry's instances.
 
+TWO-PHASE DUMP (no route to the service from the TM1 box)
+---------------------------------------------------------
+Capture to a local file on the TM1 machine, move the file, upload from
+anywhere that can reach the service:
+
+    tm1craft-client.exe dump "Planning Sample" --out planning-sample.json
+    tm1craft-client.exe upload planning-sample.json --service http://craft.example.com
+
+The bundle file is the capture verbatim — instance name plus the four
+password-stripped entity kinds — so it carries no credentials and is
+safe to move. upload resolves the service from --service or the INI's
+[service] upload_url; with no INI at all, --service is required.
+
 CREDENTIALS INI
 ---------------
 A ready-to-edit copy ships beside this README: tm1-client.ini.example
