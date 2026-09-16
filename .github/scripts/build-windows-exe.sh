@@ -58,8 +58,9 @@ if [ ! -f "$binary" ]; then
     exit 1
 fi
 
-echo "==> staging README"
+echo "==> staging README and example registry"
 cp "$templates_dir/README.txt" "$package_root/README.txt"
+cp "$repo_root/tm1-client.ini.example" "$package_root/tm1-client.ini.example"
 
 echo "==> smoke test (version, help, list over a staged registry)"
 # No TM1 server is involved: --version proves the bundled dist metadata,
