@@ -6,7 +6,9 @@ layer (``tests/test_config.py``) covers the INI parsing itself.
 """
 
 import importlib.metadata
+import io
 import json
+import sys
 
 import pytest
 
@@ -616,3 +618,23 @@ def test_dump_help_mentions_out(tmp_path, capsys):
         cli.main(["dump", "--help"])
     assert exit_info.value.code == 0
     assert "--out" in capsys.readouterr().out
+
+
+# --- legacy code pages: output must degrade, never crash (#18) ------------------
+
+
+def test_output_survives_a_strict_legacy_code_page(tmp_path, monkeypatch):
+    """A cp1252 Windows console (strict charmap stream) must not crash on
+    non-ASCII output: the CLI entry makes the streams lossy, so an instance
+    name outside the code page prints with a replacement, not a traceback."""
+    buffer = io.BytesIO()
+    strict_stream = io.TextIOWrapper(buffer, encoding="cp1252")
+    monkeypatch.setattr(sys, "stdout", strict_stream)
+    registry = tmp_path / "tm1-client.ini"
+    registry.write_text("[Inst\u2192ance]\nbase = http://t:1\nuser = u\n", encoding="utf-8")
+
+    exit_code = cli.main(["list", "--credentials", str(registry)])
+    strict_stream.flush()
+
+    assert exit_code == 0
+    assert "Inst?ance" in buffer.getvalue().decode("cp1252")

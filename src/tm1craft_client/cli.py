@@ -60,6 +60,7 @@ class DumpError(Exception):
 
 def main(argv: list[str] | None = None) -> int:
     """Run the CLI; return the process exit code (0 ok, 1 failure, 2 usage/config)."""
+    _harden_console_streams()
     parser = _build_parser()
     args = parser.parse_args(argv)
     try:
@@ -74,6 +75,25 @@ def main(argv: list[str] | None = None) -> int:
             raise
         print(f"error: {problem}", file=sys.stderr)
         return 1
+
+
+def _harden_console_streams() -> None:
+    """Make stdout/stderr lossy instead of crashing on unencodable text (#18).
+
+    A Windows console under a legacy code page (cp1252) gives Python a
+    strict charmap stream: printing any non-ASCII character — the arrow in
+    a help string, a Unicode instance name in a summary — raises
+    UnicodeEncodeError. ``errors="replace"`` degrades those characters to
+    ``?``; the encoding itself is untouched, so ASCII output (everything
+    the CLI normally prints) is byte-identical.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(errors="replace")
+            except (OSError, ValueError):
+                pass  # a stream that cannot reconfigure keeps its behavior
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -107,7 +127,7 @@ def _build_parser() -> argparse.ArgumentParser:
     dump.add_argument("--arc-origin", help="Arc origin forwarded to the service (rides the job start as arcOrigin)")
     dump.add_argument(
         "--license-key",
-        help=f"service license key (default: env {LICENSE_KEY_ENV_VAR}); absent → no Authorization header",
+        help=f"service license key (default: env {LICENSE_KEY_ENV_VAR}); absent -> no Authorization header",
     )
     dump.add_argument(
         "--out",
@@ -130,7 +150,7 @@ def _build_parser() -> argparse.ArgumentParser:
     upload.add_argument("--arc-origin", help="Arc origin forwarded to the service (rides the job start as arcOrigin)")
     upload.add_argument(
         "--license-key",
-        help=f"service license key (default: env {LICENSE_KEY_ENV_VAR}); absent → no Authorization header",
+        help=f"service license key (default: env {LICENSE_KEY_ENV_VAR}); absent -> no Authorization header",
     )
     upload.set_defaults(handler=_run_upload)
 
