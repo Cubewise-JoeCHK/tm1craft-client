@@ -1,3 +1,9 @@
+## 0.7.1 (2026-09-16)
+
+### Fix
+
+- **cli**: legacy code pages — output degrades to ?, never crashes (#18) (#19)
+
 ## 0.7.0 (2026-09-16)
 
 ### Feat
