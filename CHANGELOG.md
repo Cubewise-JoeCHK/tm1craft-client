@@ -1,3 +1,9 @@
+## 0.6.0 (2026-09-16)
+
+### Feat
+
+- **build**: ship tm1-client.ini.example — ready-to-edit registry (#14) (#15)
+
 ## 0.5.0 (2026-09-15)
 
 ### Feat
