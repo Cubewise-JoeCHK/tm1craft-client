@@ -1,3 +1,9 @@
+## 0.7.0 (2026-09-16)
+
+### Feat
+
+- **cli**: two-phase dump — capture to local file, upload separately (#16) (#17)
+
 ## 0.6.0 (2026-09-16)
 
 ### Feat
