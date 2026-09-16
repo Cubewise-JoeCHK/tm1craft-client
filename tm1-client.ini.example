@@ -1,0 +1,28 @@
+# tm1craft-client credentials registry (ADR-0003 format) — example.
+#
+# Copy this file to tm1-client.ini (next to where you run the exe —
+# that is the first default lookup, then %USERPROFILE%\.tm1-client.ini),
+# or keep any name and pass --credentials <path>. The file is read on
+# every invocation and never written; the password is never printed and
+# argv is never logged. It holds secrets — keep its permissions to
+# yourself.
+#
+# One [<instance name>] section per TM1 instance: the name is what you
+# pass to `dump` and must match exactly (case-sensitive). Keys: base
+# (required, the instance's REST endpoint), user (required), password
+# (may be empty when the TM1 user is configured without one).
+
+[Planning Sample]
+base = http://tm1.example.com:12354/api/v1
+user = admin
+password =
+
+[Sandbox]
+base = http://tm1.example.com:12355/api/v1
+user = test
+password = change-me
+
+# The one section that is not a TM1 instance: where dumps go. Optional —
+# a --service <url> flag on the dump command overrides it per run.
+[service]
+upload_url = http://craft.example.com

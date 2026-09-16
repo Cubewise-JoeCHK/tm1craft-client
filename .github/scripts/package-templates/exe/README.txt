@@ -27,6 +27,9 @@ RUN
 
 CREDENTIALS INI
 ---------------
+A ready-to-edit copy ships beside this README: tm1-client.ini.example
+— copy it to tm1-client.ini here, fill in your hosts, done. The format:
+
     [Planning Sample]
     base = http://tm1.example.com:12354/api/v1
     user = admin
