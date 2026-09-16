@@ -85,12 +85,26 @@ Save it as `./tm1-client.ini` or `~/.tm1-client.ini` (or pass
 chmod 600 ~/.tm1-client.ini
 ```
 
-Two commands:
+Three commands:
 
 ```bash
 tm1craft-client list                    # print the registry's instance sections (name + base URL)
 tm1craft-client dump "Planning Sample"  # capture one TM1 instance and upload it to a tm1craft service
+tm1craft-client upload dump.json        # replay a bundle file written by 'dump --out'
 ```
+
+**Two-phase dump** for boxes that cannot reach the service: capture to a
+local file on the TM1 machine, move the file, upload from anywhere.
+
+```bash
+tm1craft-client dump "Planning Sample" --out planning-sample.json   # no service is contacted
+tm1craft-client upload planning-sample.json --service http://craft.example.com
+```
+
+The bundle file is the capture verbatim — instance name plus the four
+password-stripped entity kinds — so it carries no credentials and is safe
+to move. `upload` resolves the service from `--service` or the registry's
+`[service] upload_url`; with no registry at all, `--service` is required.
 
 Progress (per-kind capture counts, build stages) renders on **stderr**; the
 final report goes to **stdout**, so `tm1craft-client dump prod 2>capture.log`
@@ -112,6 +126,7 @@ unchanged: 159
 | `--credentials PATH` | registry path; default: `./tm1-client.ini` then `~/.tm1-client.ini` |
 | `--base`, `--user`, `--password` | one-off overrides of the instance's connection (password may be empty) |
 | `--service URL` | service base URL; wins over the `[service] upload_url` |
+| `--out PATH` | write the captured bundle to a file instead of uploading — no service is contacted; replay with `upload` |
 | `--arc-origin URL` | Arc origin forwarded to the service (rides the job start) |
 | `--license-key KEY` | service license key; default: env `TM1CRAFT_CLIENT_LICENSE_KEY` |
 | `--debug` | on failure, show the traceback instead of one line |

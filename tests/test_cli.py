@@ -6,6 +6,7 @@ layer (``tests/test_config.py``) covers the INI parsing itself.
 """
 
 import importlib.metadata
+import json
 
 import pytest
 
@@ -492,3 +493,126 @@ def test_version_prints_the_package_metadata_version(capsys):
 def test_console_script_entry_point_is_declared():
     matches = importlib.metadata.entry_points(group="console_scripts", name="tm1craft-client")
     assert [entry.value for entry in matches] == ["tm1craft_client.cli:main"]
+
+
+# --- two-phase: dump --out writes a file, upload replays it (#16) --------------
+
+
+PROD_ONLY_INI = """\
+[prod]
+base = http://tm1-prod:12354/api/v1
+user = admin
+password = s3cret-prod
+"""
+
+FULL_BUNDLE = {
+    "instance": "prod",
+    "entities": {kind: ([] if kind != "processes" else [{"Name": "Process1"}]) for kind in ENTITY_KINDS},
+}
+
+
+def test_dump_out_writes_the_bundle_and_needs_no_service(tmp_path, tm1_recorder, monkeypatch, capsys):
+    """--out captures to a file with no service anywhere: a registry without
+    [service] succeeds, upload_bundle is never called, and the file holds the
+    bundle verbatim."""
+    registry = tmp_path / "tm1-client.ini"
+    registry.write_text(PROD_ONLY_INI, encoding="utf-8")
+    out_file = tmp_path / "bundle.json"
+    install_capture(monkeypatch)
+    upload_calls = install_upload(monkeypatch)
+
+    exit_code = cli.main(["dump", "prod", "--credentials", str(registry), "--out", str(out_file)])
+
+    assert exit_code == 0
+    assert upload_calls == []
+    assert json.loads(out_file.read_text(encoding="utf-8")) == BUNDLE
+    output = capsys.readouterr()
+    assert "captured prod" in output.out
+    assert f"path: {out_file.resolve()}" in output.out
+
+
+def test_dump_out_unwritable_path_exits_one(tmp_path, tm1_recorder, monkeypatch, capsys):
+    registry = tmp_path / "tm1-client.ini"
+    registry.write_text(PROD_ONLY_INI, encoding="utf-8")
+    install_capture(monkeypatch)
+    install_upload(monkeypatch)
+
+    exit_code = cli.main(
+        ["dump", "prod", "--credentials", str(registry), "--out", str(tmp_path / "no-such-dir" / "b.json")]
+    )
+
+    assert exit_code == 1
+    assert "cannot write" in capsys.readouterr().err
+
+
+def test_upload_round_trips_a_bundle_file(tmp_path, monkeypatch, capsys):
+    bundle_file = tmp_path / "bundle.json"
+    bundle_file.write_text(json.dumps(FULL_BUNDLE), encoding="utf-8")
+    upload_calls = install_upload(monkeypatch)
+
+    exit_code = cli.main(["upload", str(bundle_file), "--service", "http://svc.example.com"])
+
+    assert exit_code == 0
+    assert len(upload_calls) == 1
+    assert upload_calls[0]["service_url"] == "http://svc.example.com"
+    assert upload_calls[0]["instance"] == "prod"
+    assert upload_calls[0]["bundle"] == FULL_BUNDLE["entities"]
+    assert "job job-1 done" in capsys.readouterr().out
+
+
+def test_upload_reads_the_service_from_the_registry(tmp_path, registry_path, monkeypatch):
+    bundle_file = tmp_path / "bundle.json"
+    bundle_file.write_text(json.dumps(FULL_BUNDLE), encoding="utf-8")
+    upload_calls = install_upload(monkeypatch)
+
+    exit_code = cli.main(["upload", str(bundle_file), "--credentials", registry_path])
+
+    assert exit_code == 0
+    assert upload_calls[0]["service_url"] == "http://craft-service.example.com"
+
+
+def test_upload_without_service_or_registry_exits_two(tmp_path, no_default_ini, monkeypatch, capsys):
+    bundle_file = tmp_path / "bundle.json"
+    bundle_file.write_text(json.dumps(FULL_BUNDLE), encoding="utf-8")
+    install_upload(monkeypatch)
+
+    exit_code = cli.main(["upload", str(bundle_file)])
+
+    assert exit_code == 2
+    assert "no service URL" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "not json at all",
+        "[1, 2, 3]",
+        '{"entities": {"processes": []}}',
+        '{"instance": "prod", "entities": {"processes": []}}',
+    ],
+)
+def test_upload_rejects_malformed_bundle_files(tmp_path, monkeypatch, capsys, content):
+    bundle_file = tmp_path / "bundle.json"
+    bundle_file.write_text(content, encoding="utf-8")
+    install_upload(monkeypatch)
+
+    exit_code = cli.main(["upload", str(bundle_file), "--service", "http://svc.example.com"])
+
+    assert exit_code == 2
+    assert "bundle" in capsys.readouterr().err
+
+
+def test_upload_help_lists_the_flags(capsys):
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(["upload", "--help"])
+    assert exit_info.value.code == 0
+    out = capsys.readouterr().out
+    for flag in ("--credentials", "--service", "--arc-origin", "--license-key"):
+        assert flag in out
+
+
+def test_dump_help_mentions_out(tmp_path, capsys):
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(["dump", "--help"])
+    assert exit_info.value.code == 0
+    assert "--out" in capsys.readouterr().out

@@ -64,10 +64,13 @@ cp "$repo_root/tm1-client.ini.example" "$package_root/tm1-client.ini.example"
 
 echo "==> smoke test (version, help, list over a staged registry)"
 # No TM1 server is involved: --version proves the bundled dist metadata,
-# --help the argparse surface, and list over a staged INI the whole
+# --help the argparse surface (both subcommands — upload is the replay
+# half of the two-phase dump, #16), and list over a staged INI the whole
 # config-resolution path — the same code dump runs before touching TM1.
 "$binary" --version
 "$binary" --help > /dev/null
+"$binary" dump --help > /dev/null
+"$binary" upload --help > /dev/null
 
 registry_ini="$staging_dir/tm1-client.ini"
 cat > "$registry_ini" <<'INI'
