@@ -56,10 +56,14 @@ def test_resolve_instance_reads_section(registry):
     )
 
 
-def test_resolve_instance_password_may_be_empty(registry):
+def test_resolve_instance_password_absent_is_none_and_empty_is_empty(tmp_path):
+    """Issue #21: an absent password key stays None; an explicit empty value resolves to ""."""
+    registry = load_registry(write_ini(tmp_path, "[dev]\nbase = https://tm1-dev:12354/api/v1\nuser = devuser\n"))
+    instance = resolve_instance(registry, "dev")
+    assert instance.password is None
+    registry = load_registry(write_ini(tmp_path, "[dev]\nuser = devuser\npassword =\n"))
     instance = resolve_instance(registry, "dev")
     assert instance.password == ""
-    assert instance.user == "devuser"
 
 
 def test_resolve_instance_unknown_section_raises_with_known_names(registry):
@@ -70,16 +74,19 @@ def test_resolve_instance_unknown_section_raises_with_known_names(registry):
     assert "prod" in message and "dev" in message
 
 
-def test_resolve_instance_missing_base_raises(tmp_path):
+def test_resolve_instance_missing_base_passes_through(tmp_path):
+    """Issue #21: no base is no error — the absent key resolves to None and TM1py validates."""
     registry = load_registry(write_ini(tmp_path, "[prod]\nuser = admin\n"))
-    with pytest.raises(ConfigError, match="--base"):
-        resolve_instance(registry, "prod")
+    instance = resolve_instance(registry, "prod")
+    assert instance.base is None
+    assert instance.user == "admin"
 
 
-def test_resolve_instance_missing_user_raises(tmp_path):
+def test_resolve_instance_missing_user_passes_through(tmp_path):
     registry = load_registry(write_ini(tmp_path, "[prod]\nbase = http://tm1-prod:12354/api/v1\n"))
-    with pytest.raises(ConfigError, match="--user"):
-        resolve_instance(registry, "prod")
+    instance = resolve_instance(registry, "prod")
+    assert instance.user is None
+    assert instance.base == "http://tm1-prod:12354/api/v1"
 
 
 def test_flag_overrides_beat_ini_values(registry):
@@ -169,11 +176,11 @@ def test_redact_without_secret_returns_text_unchanged():
     assert redact("nothing to hide", "") == "nothing to hide"
 
 
-def test_config_error_messages_never_carry_the_password(tmp_path):
+def test_instance_rendering_never_carries_the_password(tmp_path):
     registry = load_registry(write_ini(tmp_path, "[prod]\nbase = http://tm1:12354/api/v1\npassword = s3cret-prod\n"))
-    with pytest.raises(ConfigError) as problem:
-        resolve_instance(registry, "prod")
-    assert "s3cret-prod" not in str(problem.value)
+    instance = resolve_instance(registry, "prod")
+    assert "s3cret-prod" not in repr(instance)
+    assert "s3cret-prod" not in str(instance)
 
 
 def test_load_registry_unparseable_raises(tmp_path):

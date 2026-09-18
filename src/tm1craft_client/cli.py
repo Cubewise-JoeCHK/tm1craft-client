@@ -339,15 +339,26 @@ def _connect_tm1(instance: InstanceConfig) -> TM1Service:
 
     Extra keys from the instance's INI section are forwarded to
     ``TM1Service`` as-is (scalar-coerced); ``ssl`` defaults from the
-    scheme unless the section sets it explicitly, and the resolved
-    base/user/password always win over any INI values.
+    scheme only when ``base`` is actually present, and the resolved
+    base/user/password always win over any INI values. A key that is
+    absent (``None``) is omitted entirely — TM1py is the authority on
+    whether the resulting kwargs are valid (#21); a key present but
+    empty (an explicit ``password =`` in the INI, say) still passes
+    through as an empty string.
     """
-    scheme = urlparse(instance.base).scheme.lower()
-    if scheme not in ("http", "https"):
-        raise ConfigError(f"instance '{instance.name}': base must be an http:// or https:// URL (got {instance.base})")
     kwargs: dict[str, object] = {key: _coerce_scalar(value) for key, value in instance.extra.items()}
-    kwargs.setdefault("ssl", scheme == "https")
-    kwargs.update(base_url=instance.base, user=instance.user, password=instance.password)
+    if instance.base is not None:
+        scheme = urlparse(instance.base).scheme.lower()
+        if scheme not in ("http", "https"):
+            raise ConfigError(
+                f"instance '{instance.name}': base must be an http:// or https:// URL (got {instance.base})"
+            )
+        kwargs.setdefault("ssl", scheme == "https")
+        kwargs["base_url"] = instance.base
+    if instance.user is not None:
+        kwargs["user"] = instance.user
+    if instance.password is not None:
+        kwargs["password"] = instance.password
     return TM1Service(**kwargs)
 
 

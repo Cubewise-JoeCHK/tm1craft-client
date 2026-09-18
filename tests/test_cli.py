@@ -230,6 +230,70 @@ def test_dump_explicit_ssl_in_section_overrides_scheme_default(tmp_path, tm1_rec
     assert tm1_recorder[0].kwargs["ssl"] is False
 
 
+def test_dump_missing_base_omits_base_url_and_ssl_kwargs(tmp_path, tm1_recorder, monkeypatch):
+    """Issue #21: a section without base proceeds — no base_url/ssl is injected, no error is raised."""
+    path = tmp_path / "tm1-client.ini"
+    path.write_text(
+        "[service]\nupload_url = http://craft.example.com\n\n[prod]\nuser = admin\npassword = s3cret-prod\n",
+        encoding="utf-8",
+    )
+    install_capture(monkeypatch)
+    install_upload(monkeypatch)
+    exit_code = cli.main(["dump", "prod", "--credentials", str(path)])
+    assert exit_code == 0
+    assert tm1_recorder[0].kwargs == {"user": "admin", "password": "s3cret-prod"}
+
+
+def test_dump_missing_user_omits_user_kwarg(tmp_path, tm1_recorder, monkeypatch):
+    path = tmp_path / "tm1-client.ini"
+    path.write_text(
+        "[service]\nupload_url = http://craft.example.com\n\n"
+        "[prod]\nbase = https://tm1-prod:12354/api/v1\npassword = s3cret-prod\n",
+        encoding="utf-8",
+    )
+    install_capture(monkeypatch)
+    install_upload(monkeypatch)
+    exit_code = cli.main(["dump", "prod", "--credentials", str(path)])
+    assert exit_code == 0
+    kwargs = tm1_recorder[0].kwargs
+    assert kwargs["base_url"] == "https://tm1-prod:12354/api/v1"
+    assert kwargs["ssl"] is True
+    assert "user" not in kwargs
+
+
+def test_dump_explicit_empty_password_passes_through_as_empty_string(tmp_path, tm1_recorder, monkeypatch):
+    path = tmp_path / "tm1-client.ini"
+    path.write_text(
+        "[service]\nupload_url = http://craft.example.com\n\n"
+        "[prod]\nbase = http://tm1-prod:12354/api/v1\nuser = admin\npassword =\n",
+        encoding="utf-8",
+    )
+    install_capture(monkeypatch)
+    install_upload(monkeypatch)
+    cli.main(["dump", "prod", "--credentials", str(path)])
+    assert tm1_recorder[0].kwargs["password"] == ""
+
+
+def test_dump_connection_failure_is_exit_one_one_line(tmp_path, monkeypatch, capsys):
+    """Issue #21: with no base, TM1Service itself rejects the kwargs — surfaced as a clean exit-1 error."""
+    path = tmp_path / "tm1-client.ini"
+    path.write_text(
+        "[service]\nupload_url = http://craft.example.com\n\n[prod]\nuser = admin\n",
+        encoding="utf-8",
+    )
+
+    class ExplodingTM1Service:
+        def __init__(self, **kwargs):
+            raise ValueError("base_url or address is required to connect")
+
+    monkeypatch.setattr(cli, "TM1Service", ExplodingTM1Service)
+    exit_code = cli.main(["dump", "prod", "--credentials", str(path)])
+    assert exit_code == 1
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1
+    assert "base_url or address is required" in err
+
+
 def test_dump_passes_the_captured_bundle_through(registry_path, tm1_recorder, monkeypatch):
     capture_calls = install_capture(monkeypatch)
     upload_calls = install_upload(monkeypatch)

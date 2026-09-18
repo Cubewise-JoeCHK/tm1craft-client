@@ -51,9 +51,9 @@ class InstanceConfig:
     """
 
     name: str
-    base: str
-    user: str
-    password: str = ""
+    base: str | None = None
+    user: str | None = None
+    password: str | None = None
     extra: dict[str, str] = field(default_factory=dict)
     # Other keys from the instance's INI section, forwarded to TM1Service.
 
@@ -104,10 +104,13 @@ def resolve_instance(
     """Resolve one instance from the registry; the ``base``/``user``/``password`` flags win when given.
 
     The section must match ``instance`` exactly (configparser never
-    casefolds section names — the ADR-0003 rule). ``base`` and ``user``
-    are required (from INI or flag); ``password`` may be empty. Every
-    error message names the instance and the fix — none carries secret
-    material.
+    casefolds section names — the ADR-0003 rule). No key is required:
+    whatever the section (or the flags) carries is resolved and passed
+    through — TM1py is the authority on whether the connection kwargs
+    are valid (#21). A key absent from both the section and the flags
+    stays ``None``; a key present but empty in the INI resolves to
+    ``""``. Every error message names the instance and the fix — none
+    carries secret material.
     """
     if not registry.has_section(instance):
         known = ", ".join(name for name, _ in list_instances(registry)) or "none"
@@ -117,13 +120,9 @@ def resolve_instance(
     section = registry[instance]
     connection_keys = ("base", "user", "password")
     extra = {key: value for key, value in section.items() if key not in connection_keys}
-    resolved_base = base if base is not None else section.get("base", "")
-    resolved_user = user if user is not None else section.get("user", "")
-    resolved_password = password if password is not None else section.get("password", "")
-    if not resolved_base:
-        raise ConfigError(f"instance '{instance}' has no base URL — set base in [{instance}] or pass --base")
-    if not resolved_user:
-        raise ConfigError(f"instance '{instance}' has no user — set user in [{instance}] or pass --user")
+    resolved_base = base if base is not None else (section["base"] if "base" in section else None)
+    resolved_user = user if user is not None else (section["user"] if "user" in section else None)
+    resolved_password = password if password is not None else (section["password"] if "password" in section else None)
     return InstanceConfig(
         name=instance, base=resolved_base, user=resolved_user, password=resolved_password, extra=extra
     )

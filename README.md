@@ -102,9 +102,12 @@ Values are scalar-coerced on the way in: `true`/`false` (any casing)
 become booleans, an all-digits value becomes an integer, anything else
 stays a string. `ssl` defaults from the `base` URL's scheme
 (`https://` → `ssl = true`) unless the section sets `ssl` itself, and
-the `--base`/`--user`/`--password` flags still beat the INI. TM1py
-raises on a key it doesn't recognize — that's the pass-through
-contract, not a bug.
+the `--base`/`--user`/`--password` flags still beat the INI. No key is
+required: the client passes whatever the section (or flags) carries to
+`TM1Service` and TM1py validates it — a section may legitimately use a
+different parameter set (e.g. `address` + `port` instead of `base`, or
+namespace auth), and a missing or unrecognized key surfaces as TM1py's
+own connection error (exit code 1).
 
 Three commands:
 ```bash
