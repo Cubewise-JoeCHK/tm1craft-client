@@ -1,3 +1,9 @@
+## 0.8.1 (2026-09-18)
+
+### Fix
+
+- drop the base/user pre-validation gate; let TM1py validate the connection
+
 ## 0.8.0 (2026-09-18)
 
 ### Feat
