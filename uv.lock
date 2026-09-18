@@ -802,7 +802,7 @@ wheels = [
 
 [[package]]
 name = "tm1craft-client"
-version = "0.7.0"
+version = "0.7.1"
 source = { editable = "." }
 dependencies = [
     { name = "tm1py" },

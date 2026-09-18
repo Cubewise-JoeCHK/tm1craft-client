@@ -85,8 +85,28 @@ Save it as `./tm1-client.ini` or `~/.tm1-client.ini` (or pass
 chmod 600 ~/.tm1-client.ini
 ```
 
-Three commands:
+**Extra connection parameters.** Any additional keys in an instance
+section are passed straight through to TM1py's `TM1Service` — so TM1py
+connection options work right in the registry:
 
+```ini
+[Planning Sample]
+base = https://tm1.example.com:12354/api/v1
+user = admin
+password =
+namespace = LDAP
+verify_ssl = false
+```
+
+Values are scalar-coerced on the way in: `true`/`false` (any casing)
+become booleans, an all-digits value becomes an integer, anything else
+stays a string. `ssl` defaults from the `base` URL's scheme
+(`https://` → `ssl = true`) unless the section sets `ssl` itself, and
+the `--base`/`--user`/`--password` flags still beat the INI. TM1py
+raises on a key it doesn't recognize — that's the pass-through
+contract, not a bug.
+
+Three commands:
 ```bash
 tm1craft-client list                    # print the registry's instance sections (name + base URL)
 tm1craft-client dump "Planning Sample"  # capture one TM1 instance and upload it to a tm1craft service

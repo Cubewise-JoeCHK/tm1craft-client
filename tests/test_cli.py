@@ -160,6 +160,76 @@ def test_dump_https_base_sets_ssl_true(registry_path, tm1_recorder, monkeypatch)
     assert tm1_recorder[0].kwargs["ssl"] is True
 
 
+def test_dump_forwards_extra_ini_keys_as_coerced_kwargs(tmp_path, tm1_recorder, monkeypatch):
+    """Issue #20: extra keys in the instance section reach TM1Service, scalar-coerced."""
+    path = tmp_path / "tm1-client.ini"
+    path.write_text(
+        "[service]\nupload_url = http://craft.example.com\n\n"
+        "[prod]\n"
+        "base = https://tm1-prod:12354/api/v1\n"
+        "user = admin\n"
+        "password = s3cret-prod\n"
+        "namespace = LDAP\n"
+        "verify_ssl = false\n"
+        "session_timeout = 300\n",
+        encoding="utf-8",
+    )
+    install_capture(monkeypatch)
+    install_upload(monkeypatch)
+    cli.main(["dump", "prod", "--credentials", str(path)])
+    kwargs = tm1_recorder[0].kwargs
+    assert kwargs["namespace"] == "LDAP"
+    assert kwargs["verify_ssl"] is False
+    assert kwargs["session_timeout"] == 300
+    assert kwargs["ssl"] is True  # scheme default still applies
+
+
+def test_dump_flags_still_win_over_ini_and_extras(tmp_path, tm1_recorder, monkeypatch):
+    path = tmp_path / "tm1-client.ini"
+    path.write_text(
+        "[service]\nupload_url = http://craft.example.com\n\n"
+        "[prod]\n"
+        "base = https://tm1-prod:12354/api/v1\n"
+        "user = admin\n"
+        "password = s3cret-prod\n",
+        encoding="utf-8",
+    )
+    install_capture(monkeypatch)
+    install_upload(monkeypatch)
+    cli.main(
+        [
+            "dump",
+            "prod",
+            "--credentials",
+            str(path),
+            "--base",
+            "http://override:9999/api/v1",
+            "--user",
+            "override-user",
+            "--password",
+            "override-secret",
+        ]
+    )
+    kwargs = tm1_recorder[0].kwargs
+    assert kwargs["base_url"] == "http://override:9999/api/v1"
+    assert kwargs["user"] == "override-user"
+    assert kwargs["password"] == "override-secret"
+    assert kwargs["ssl"] is False  # scheme of the --base override
+
+
+def test_dump_explicit_ssl_in_section_overrides_scheme_default(tmp_path, tm1_recorder, monkeypatch):
+    path = tmp_path / "tm1-client.ini"
+    path.write_text(
+        "[service]\nupload_url = http://craft.example.com\n\n"
+        "[prod]\nbase = https://tm1-prod:12354/api/v1\nuser = admin\nssl = false\n",
+        encoding="utf-8",
+    )
+    install_capture(monkeypatch)
+    install_upload(monkeypatch)
+    cli.main(["dump", "prod", "--credentials", str(path)])
+    assert tm1_recorder[0].kwargs["ssl"] is False
+
+
 def test_dump_passes_the_captured_bundle_through(registry_path, tm1_recorder, monkeypatch):
     capture_calls = install_capture(monkeypatch)
     upload_calls = install_upload(monkeypatch)

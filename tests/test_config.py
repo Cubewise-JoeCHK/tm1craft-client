@@ -102,6 +102,36 @@ def test_flag_override_only_touches_the_flag_it_covers(registry):
     assert instance.password == "one-off"
 
 
+def test_resolve_instance_collects_extra_keys_as_extras(tmp_path):
+    registry = load_registry(
+        write_ini(
+            tmp_path,
+            "[prod]\nbase = https://tm1:12354/api/v1\nuser = admin\nnamespace = LDAP\nverify_ssl = false\n",
+        )
+    )
+    instance = resolve_instance(registry, "prod")
+    assert instance.extra == {"namespace": "LDAP", "verify_ssl": "false"}
+
+
+def test_resolve_instance_extras_empty_when_section_has_only_connection_keys(registry):
+    instance = resolve_instance(registry, "prod")
+    assert instance.extra == {}
+
+
+def test_instance_rendering_never_shows_extras():
+    instance = InstanceConfig(
+        name="prod",
+        base="http://tm1:12354/api/v1",
+        user="admin",
+        password="s3cret-prod",
+        extra={"cam_passport": "passport-token"},
+    )
+    rendered = repr(instance)
+    assert "s3cret-prod" not in rendered
+    assert "cam_passport" not in rendered
+    assert "passport-token" not in rendered
+
+
 def test_service_url_flag_wins_over_ini(registry):
     assert resolve_service_url(registry, "http://flag-service.example.com") == "http://flag-service.example.com"
 

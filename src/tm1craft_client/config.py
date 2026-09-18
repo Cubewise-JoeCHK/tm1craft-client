@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import configparser
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 DEFAULT_CREDENTIALS_PATHS = ("./tm1-client.ini", "~/.tm1-client.ini")
 # Where --credentials looks when it is not given, in order.
@@ -45,13 +45,17 @@ class InstanceConfig:
 
     The password is the only field the rendered forms withhold:
     ``__repr__`` (and therefore ``__str__``) show ``***`` in its place,
-    so the instance is safe to interpolate into an error message.
+    so the instance is safe to interpolate into an error message. The
+    ``extra`` pass-through keys may carry secrets too, so they never
+    render at all.
     """
 
     name: str
     base: str
     user: str
     password: str = ""
+    extra: dict[str, str] = field(default_factory=dict)
+    # Other keys from the instance's INI section, forwarded to TM1Service.
 
     def __repr__(self) -> str:
         """Render the connection with the password masked."""
@@ -111,6 +115,8 @@ def resolve_instance(
             f"unknown instance '{instance}' — the registry has no [{instance}] section (known instances: {known})"
         )
     section = registry[instance]
+    connection_keys = ("base", "user", "password")
+    extra = {key: value for key, value in section.items() if key not in connection_keys}
     resolved_base = base if base is not None else section.get("base", "")
     resolved_user = user if user is not None else section.get("user", "")
     resolved_password = password if password is not None else section.get("password", "")
@@ -118,7 +124,9 @@ def resolve_instance(
         raise ConfigError(f"instance '{instance}' has no base URL — set base in [{instance}] or pass --base")
     if not resolved_user:
         raise ConfigError(f"instance '{instance}' has no user — set user in [{instance}] or pass --user")
-    return InstanceConfig(name=instance, base=resolved_base, user=resolved_user, password=resolved_password)
+    return InstanceConfig(
+        name=instance, base=resolved_base, user=resolved_user, password=resolved_password, extra=extra
+    )
 
 
 def resolve_service_url(registry: configparser.ConfigParser, flag: str | None) -> str:

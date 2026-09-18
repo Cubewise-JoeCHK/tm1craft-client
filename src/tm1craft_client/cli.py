@@ -322,12 +322,33 @@ def _print_capture_summary(bundle: dict, out_path: str) -> None:
     print(f"path: {os.path.abspath(out_path)}")
 
 
+def _coerce_scalar(value: str) -> bool | int | str:
+    """Coerce an INI string to a scalar: ``true``/``false`` become bool, all-digits become int, else the string stays."""
+    lowered = value.lower()
+    if lowered == "true":
+        return True
+    if lowered == "false":
+        return False
+    if value.isdigit():
+        return int(value)
+    return value
+
+
 def _connect_tm1(instance: InstanceConfig) -> TM1Service:
-    """Open the TM1py session for ``instance``; ssl follows the base URL's scheme (TM1py wants ssl=False for http)."""
+    """Open the TM1py session for ``instance``; ssl follows the base URL's scheme (TM1py wants ssl=False for http).
+
+    Extra keys from the instance's INI section are forwarded to
+    ``TM1Service`` as-is (scalar-coerced); ``ssl`` defaults from the
+    scheme unless the section sets it explicitly, and the resolved
+    base/user/password always win over any INI values.
+    """
     scheme = urlparse(instance.base).scheme.lower()
     if scheme not in ("http", "https"):
         raise ConfigError(f"instance '{instance.name}': base must be an http:// or https:// URL (got {instance.base})")
-    return TM1Service(base_url=instance.base, user=instance.user, password=instance.password, ssl=scheme == "https")
+    kwargs: dict[str, object] = {key: _coerce_scalar(value) for key, value in instance.extra.items()}
+    kwargs.setdefault("ssl", scheme == "https")
+    kwargs.update(base_url=instance.base, user=instance.user, password=instance.password)
+    return TM1Service(**kwargs)
 
 
 def _report_capture_progress(kind: str, message: str) -> None:
