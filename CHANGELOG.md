@@ -1,3 +1,9 @@
+## 0.8.0 (2026-09-18)
+
+### Feat
+
+- pass extra INI instance keys through to TM1Service
+
 ## 0.7.1 (2026-09-16)
 
 ### Fix
