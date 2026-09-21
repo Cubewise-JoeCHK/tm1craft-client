@@ -11,7 +11,11 @@ RUN
 ---
 1. Unzip the folder anywhere and run tm1craft-client.exe from inside
    it — the exe is self-contained, nothing else needs to stay beside
-   it.
+   it. The first run may show a "Windows protected your PC" dialog:
+   the standard SmartScreen caution for a downloaded exe it hasn't
+   seen before, not a finding that something is wrong. Click
+   More info, then Run anyway. First launch can take a few extra
+   seconds while the single-file exe unpacks itself.
 2. Describe your TM1 instance and the service in a credentials INI
    (below). By default the client looks for .\tm1-client.ini in the
    current directory, then %USERPROFILE%\.tm1-client.ini — or pass
