@@ -9,8 +9,9 @@ database.
 
 RUN
 ---
-1. Unzip the folder anywhere (keep _internal/ next to
-   tm1craft-client.exe).
+1. Unzip the folder anywhere and run tm1craft-client.exe from inside
+   it — the exe is self-contained, nothing else needs to stay beside
+   it.
 2. Describe your TM1 instance and the service in a credentials INI
    (below). By default the client looks for .\tm1-client.ini in the
    current directory, then %USERPROFILE%\.tm1-client.ini — or pass

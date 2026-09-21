@@ -51,7 +51,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # The Windows drop-in (#12): build the onedir with the release script
+  # The Windows drop-in (#12): build the onefile with the release script
   # (its embedded smoke — --version, --help, list over a staged INI —
   # runs inside the step) and attach the zip to the release above. The
   # needs ordering guarantees the release exists before the upload, so

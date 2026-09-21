@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 # Build the tm1craft-client Windows drop-in zip (#12): a PyInstaller
-# onedir of the capture CLI plus a README, so public users run it with
-# no Python on the box.
+# onefile of the capture CLI plus a README and an example INI, so
+# public users run it with no Python on the box.
 #
 # Usage: build-windows-exe.sh [TAG]
 #   TAG defaults to "dev"; the release workflow passes the release tag
 #   (bare version — .cz.toml tag_format is "$version"). Output:
 #   dist/tm1craft-client-<TAG>-<plat>-x64.zip holding tm1craft-client/
-#   (exe + _internal/ + README.txt).
+#   (onefile exe + README.txt + tm1-client.ini.example — no _internal/,
+#   #22).
 #
 # Runs identically in CI and locally. On windows (git-for-windows bash on
 # GitHub runners) it produces the windows-x64 zip; on linux it builds the
-# SAME spec as a linux onedir: PyInstaller is not cross-platform, the
+# SAME spec as a linux onefile: PyInstaller is not cross-platform, the
 # spec is, so the local build validates spec completeness (and is
 # smoke-tested the same way).
 set -euo pipefail
@@ -46,17 +47,23 @@ uv sync --frozen
 staging_dir="$(mktemp -d)"
 trap 'rm -rf "$staging_dir" 2>/dev/null || true' EXIT
 
-echo "==> building the onedir with pyinstaller"
+echo "==> building the onefile with pyinstaller"
 uv run --no-sync pyinstaller --noconfirm \
-    --distpath "$staging_dir" --workpath "$staging_dir/build" \
+    --distpath "$staging_dir/dist" --workpath "$staging_dir/build" \
     "$spec_file"
 
+# The onefile spec emits a single binary straight into --distpath (no
+# folder); restage it into a tm1craft-client/ folder so unzipping the
+# zip never sprays files into the cwd, and README + example INI travel
+# beside the exe (#14, #22).
 package_root="$staging_dir/tm1craft-client"
 binary="$package_root/$exe_name"
-if [ ! -f "$binary" ]; then
-    echo "pyinstaller produced no $binary" >&2
+if [ ! -f "$staging_dir/dist/$exe_name" ]; then
+    echo "pyinstaller produced no $staging_dir/dist/$exe_name" >&2
     exit 1
 fi
+mkdir "$package_root"
+mv "$staging_dir/dist/$exe_name" "$binary"
 
 echo "==> staging README and example registry"
 cp "$templates_dir/README.txt" "$package_root/README.txt"

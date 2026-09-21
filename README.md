@@ -58,10 +58,11 @@ want reproducible installs.
 Every release also ships a self-contained Windows x64 build: grab
 `tm1craft-client-<tag>-windows-x64.zip` from
 [releases](https://github.com/Cubewise-JoeCHK/tm1craft-client/releases/latest),
-unzip it anywhere, and run `tm1craft-client.exe` — no Python, no pip, no
-dependencies. The zip ships a README plus a ready-to-edit
-`tm1-client.ini.example` covering the credentials INI, exit codes, and
-the license-key variable.
+unzip it anywhere, and run the single `tm1craft-client.exe` inside — a
+onefile build, no `_internal/` folder, no Python, no pip, no
+dependencies. Beside the exe the zip ships a README plus a
+ready-to-edit `tm1-client.ini.example` covering the credentials INI,
+exit codes, and the license-key variable.
 
 Describe each TM1 instance and the service in an INI credentials registry
 (ADR-0003 format) — start from [`tm1-client.ini.example`](tm1-client.ini.example)
