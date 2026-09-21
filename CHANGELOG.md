@@ -1,3 +1,9 @@
+## 0.9.0 (2026-09-21)
+
+### Feat
+
+- **build**: pack the Windows drop-in as a onefile exe (#22) (#23)
+
 ## 0.8.1 (2026-09-18)
 
 ### Fix
